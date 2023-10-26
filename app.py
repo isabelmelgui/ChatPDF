@@ -8,6 +8,12 @@ from langchain.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
 from langchain.callbacks import get_openai_callback
+#AudioTexto
+import os
+import time
+import glob
+from gtts import gTTS
+from PIL import Image
 
 #import pickle5 as pickle
 #from pathlib import Path
@@ -49,3 +55,58 @@ if pdf is not None:
           response = chain.run(input_documents=docs, question=user_question)
           print(cb)
         st.write(response)
+
+
+#Mi NuevaApp
+
+
+try:
+    os.mkdir("temp")
+except:
+    pass
+
+st.subheader("Escucha las características de la prenda")
+
+
+#text = st.text_input("Ingrese el texto.")
+
+tld="es"
+
+def text_to_speech(text, tld):
+    
+    tts = gTTS(response,"es", tld, slow=False)
+    try:
+        my_file_name = response[0:20]
+    except:
+        my_file_name = "audio"
+    tts.save(f"temp/{my_file_name}.mp3")
+    return my_file_name, response
+
+
+#display_output_text = st.checkbox("Verifica el texto")
+
+if st.button("Escuchar características"):
+    result, output_text = text_to_speech(response, tld)
+    audio_file = open(f"temp/{result}.mp3", "rb")
+    audio_bytes = audio_file.read()
+    st.markdown(f"## Tú audio:")
+    st.audio(audio_bytes, format="audio/mp3", start_time=0)
+
+    #if display_output_text:
+    st.markdown(f"## Texto en audio:")
+    st.write(f" {output_text}")
+
+
+def remove_files(n):
+    mp3_files = glob.glob("temp/*mp3")
+    if len(mp3_files) != 0:
+        now = time.time()
+        n_days = n * 86400
+        for f in mp3_files:
+            if os.stat(f).st_mtime < now - n_days:
+                os.remove(f)
+                print("Deleted ", f)
+
+
+remove_files(7)
+
