@@ -45,7 +45,7 @@ if pdf is not None:
 
 # show user input
       st.subheader("Escribe que quieres saber sobre el documento")
-      user_question = st.text_input(" ")
+      #user_question = st.text_input(" ")
       if user_question:
         docs = knowledge_base.similarity_search(user_question)
 
@@ -55,6 +55,56 @@ if pdf is not None:
           response = chain.run(input_documents=docs, question=user_question)
           print(cb)
         st.write(response)
+
+#controlporvoz
+
+st.write("Toca el Botón y habla ")
+
+user_question = Button(label=" Inicio ", width=200)
+
+user_question.js_on_event("button_click", CustomJS(code="""
+    var recognition = new webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+ 
+    recognition.onresult = function (e) {
+        var value = "";
+        for (var i = e.resultIndex; i < e.results.length; ++i) {
+            if (e.results[i].isFinal) {
+                value += e.results[i][0].transcript;
+            }
+        }
+        if ( value != "") {
+            document.dispatchEvent(new CustomEvent("GET_TEXT", {detail: value}));
+        }
+    }
+    recognition.start();
+    """))
+
+result = streamlit_bokeh_events(
+    user_question,
+    events="GET_TEXT",
+    key="listen",
+    refresh_on_update=False,
+    override_height=75,
+    debounce_time=0)
+
+if result:
+    if "GET_TEXT" in result:
+        st.write(result.get("GET_TEXT"))
+        client1.on_publish = on_publish                            
+        client1.connect(broker,port)  
+        message =json.dumps({"Act1":result.get("GET_TEXT").strip()})
+        ret= client1.publish("voice_ctrl_Isa", message) #Cambiar tópico
+
+    
+    try:
+        os.mkdir("temp")
+    except:
+        pass
+
+
+
 
 
 #Mi NuevaApp
